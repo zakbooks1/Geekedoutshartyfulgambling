@@ -4,17 +4,50 @@
   <title>Fake Casino</title>
   <style>
     body {
-      background: #0f172a;
-      color: white;
+      margin: 0;
       font-family: Arial;
+      background: radial-gradient(circle at top, #1e293b, #020617);
+      color: white;
       text-align: center;
     }
 
-    .menu button {
-      margin: 5px;
-      padding: 10px 15px;
-      font-size: 16px;
+    h1 {
+      margin: 20px;
+      font-size: 40px;
+    }
+
+    #balanceBox {
+      background: #0f172a;
+      padding: 10px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin: 20px;
+    }
+
+    .card {
+      width: 150px;
+      height: 100px;
+      background: #1e293b;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
+      transition: 0.2s;
+      font-size: 18px;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+      background: #334155;
     }
 
     .game {
@@ -27,35 +60,54 @@
     }
 
     button {
-      background: #22c55e;
-      border: none;
-      color: white;
+      padding: 10px 15px;
+      margin: 5px;
       border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: #22c55e;
+      color: white;
+      font-size: 16px;
     }
 
     .slot {
-      font-size: 40px;
-      margin: 10px;
+      font-size: 50px;
+    }
+
+    #backBtn {
+      margin-top: 20px;
+      background: #ef4444;
     }
   </style>
 </head>
 <body>
 
 <h1>🎰 Fake Casino</h1>
-<p>Balance: $<span id="balance">1000</span></p>
 
-<div class="menu">
-  <button onclick="showGame('coin')">Coin Flip</button>
-  <button onclick="showGame('roulette')">Roulette</button>
-  <button onclick="showGame('slots')">Slots</button>
+<div id="balanceBox">
+  Balance: $<span id="balance">1000</span>
 </div>
 
-<!-- COIN FLIP -->
-<div id="coin" class="game active">
+<!-- GAME LOBBY -->
+<div id="lobby">
+  <h2>Games</h2>
+  <div class="grid">
+    <div class="card" onclick="openGame('coin')">🪙 Coin Flip</div>
+    <div class="card" onclick="openGame('roulette')">🎯 Roulette</div>
+    <div class="card" onclick="openGame('slots')">🎰 Slots</div>
+    <div class="card" onclick="openGame('dice')">🎲 Dice</div>
+    <div class="card">🃏 Blackjack (Soon)</div>
+    <div class="card">💥 Crash (Soon)</div>
+  </div>
+</div>
+
+<!-- COIN -->
+<div id="coin" class="game">
   <h2>Coin Flip</h2>
-  <button onclick="coinFlip('heads')">Heads</button>
-  <button onclick="coinFlip('tails')">Tails</button>
+  <button onclick="coin('heads')">Heads</button>
+  <button onclick="coin('tails')">Tails</button>
   <p id="coinResult"></p>
+  <button id="backBtn" onclick="goBack()">Back</button>
 </div>
 
 <!-- ROULETTE -->
@@ -64,41 +116,63 @@
   <button onclick="roulette('red')">Red</button>
   <button onclick="roulette('black')">Black</button>
   <p id="rouletteResult"></p>
+  <button id="backBtn" onclick="goBack()">Back</button>
 </div>
 
 <!-- SLOTS -->
 <div id="slots" class="game">
   <h2>Slots</h2>
-  <div class="slot" id="slot1">🍒</div>
-  <div class="slot" id="slot2">🍋</div>
-  <div class="slot" id="slot3">🍊</div>
+  <div class="slot" id="s1">🍒</div>
+  <div class="slot" id="s2">🍋</div>
+  <div class="slot" id="s3">🍊</div>
   <br>
-  <button onclick="spinSlots()">Spin</button>
+  <button onclick="spin()">Spin</button>
   <p id="slotResult"></p>
+  <button id="backBtn" onclick="goBack()">Back</button>
+</div>
+
+<!-- DICE -->
+<div id="dice" class="game">
+  <h2>Dice (Roll 1–6)</h2>
+  <button onclick="rollDice()">Roll</button>
+  <p id="diceResult"></p>
+  <button id="backBtn" onclick="goBack()">Back</button>
 </div>
 
 <script>
-let balance = 1000;
+let balance = localStorage.getItem("balance")
+  ? parseInt(localStorage.getItem("balance"))
+  : 1000;
 
 function updateBalance() {
   document.getElementById("balance").innerText = balance;
+  localStorage.setItem("balance", balance);
 }
 
-function showGame(game) {
+updateBalance();
+
+// NAVIGATION
+function openGame(id) {
+  document.getElementById("lobby").style.display = "none";
   document.querySelectorAll(".game").forEach(g => g.classList.remove("active"));
-  document.getElementById(game).classList.add("active");
+  document.getElementById(id).classList.add("active");
 }
 
-// COIN FLIP
-function coinFlip(choice) {
-  let result = Math.random() < 0.5 ? "heads" : "tails";
+function goBack() {
+  document.getElementById("lobby").style.display = "block";
+  document.querySelectorAll(".game").forEach(g => g.classList.remove("active"));
+}
 
-  if (choice === result) {
+// COIN
+function coin(choice) {
+  let r = Math.random() < 0.5 ? "heads" : "tails";
+
+  if (choice === r) {
     balance += 100;
-    document.getElementById("coinResult").innerText = "You WON!";
+    coinResult.innerText = "WIN!";
   } else {
     balance -= 100;
-    document.getElementById("coinResult").innerText = "You lost!";
+    coinResult.innerText = "LOSE!";
   }
 
   updateBalance();
@@ -106,37 +180,52 @@ function coinFlip(choice) {
 
 // ROULETTE
 function roulette(choice) {
-  let result = Math.random() < 0.5 ? "red" : "black";
+  let r = Math.random() < 0.5 ? "red" : "black";
 
-  if (choice === result) {
+  if (choice === r) {
     balance += 200;
-    document.getElementById("rouletteResult").innerText = "WIN! It was " + result;
+    rouletteResult.innerText = "WIN (" + r + ")";
   } else {
     balance -= 100;
-    document.getElementById("rouletteResult").innerText = "Lost! It was " + result;
+    rouletteResult.innerText = "LOSE (" + r + ")";
   }
 
   updateBalance();
 }
 
 // SLOTS
-function spinSlots() {
-  let symbols = ["🍒","🍋","🍊","⭐","💎"];
+function spin() {
+  let s = ["🍒","🍋","🍊","⭐","💎"];
 
-  let s1 = symbols[Math.floor(Math.random()*symbols.length)];
-  let s2 = symbols[Math.floor(Math.random()*symbols.length)];
-  let s3 = symbols[Math.floor(Math.random()*symbols.length)];
+  let a = s[Math.floor(Math.random()*s.length)];
+  let b = s[Math.floor(Math.random()*s.length)];
+  let c = s[Math.floor(Math.random()*s.length)];
 
-  document.getElementById("slot1").innerText = s1;
-  document.getElementById("slot2").innerText = s2;
-  document.getElementById("slot3").innerText = s3;
+  s1.innerText = a;
+  s2.innerText = b;
+  s3.innerText = c;
 
-  if (s1 === s2 && s2 === s3) {
+  if (a === b && b === c) {
     balance += 500;
-    document.getElementById("slotResult").innerText = "JACKPOT!";
+    slotResult.innerText = "JACKPOT!";
   } else {
     balance -= 50;
-    document.getElementById("slotResult").innerText = "Try again";
+    slotResult.innerText = "Try again";
+  }
+
+  updateBalance();
+}
+
+// DICE
+function rollDice() {
+  let r = Math.floor(Math.random() * 6) + 1;
+
+  if (r >= 4) {
+    balance += 120;
+    diceResult.innerText = "Rolled " + r + " → WIN!";
+  } else {
+    balance -= 60;
+    diceResult.innerText = "Rolled " + r + " → LOSE!";
   }
 
   updateBalance();
