@@ -1,25 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Fake Casino</title>
+  <title>Crypto Casino</title>
   <style>
     body {
       margin: 0;
       font-family: Arial;
-      background: radial-gradient(circle at top, #1e293b, #020617);
+      background: radial-gradient(circle at top, #020617, #000);
       color: white;
       text-align: center;
     }
 
     h1 {
-      margin: 20px;
-      font-size: 40px;
+      margin: 15px;
+      font-size: 38px;
+      color: #22c55e;
     }
 
     #balanceBox {
-      background: #0f172a;
-      padding: 10px;
-      border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      padding: 10px 20px;
+      border-radius: 12px;
       display: inline-block;
       margin-bottom: 20px;
     }
@@ -29,76 +31,94 @@
       flex-wrap: wrap;
       justify-content: center;
       gap: 15px;
-      margin: 20px;
+      padding: 20px;
     }
 
     .card {
-      width: 150px;
+      width: 160px;
       height: 100px;
-      background: #1e293b;
+      background: rgba(255,255,255,0.05);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       transition: 0.2s;
-      font-size: 18px;
     }
 
     .card:hover {
-      transform: scale(1.05);
-      background: #334155;
+      transform: scale(1.08);
+      box-shadow: 0 0 20px #22c55e;
     }
 
-    .game {
-      display: none;
-      margin-top: 20px;
-    }
-
-    .active {
-      display: block;
-    }
+    .game { display: none; }
+    .active { display: block; }
 
     button {
       padding: 10px 15px;
       margin: 5px;
       border-radius: 8px;
       border: none;
-      cursor: pointer;
       background: #22c55e;
       color: white;
-      font-size: 16px;
+      cursor: pointer;
     }
 
-    .slot {
+    #slots span {
       font-size: 50px;
+      margin: 5px;
+    }
+
+    #multiplier {
+      font-size: 40px;
+      color: #22c55e;
     }
 
     #backBtn {
-      margin-top: 20px;
       background: #ef4444;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
 
-<h1>🎰 Fake Casino</h1>
+<h1>💎 Crypto Casino</h1>
 
 <div id="balanceBox">
-  Balance: $<span id="balance">1000</span>
+  Balance: <span id="balance">0.00000</span> BTC
 </div>
 
-<!-- GAME LOBBY -->
+<!-- LOBBY -->
 <div id="lobby">
-  <h2>Games</h2>
   <div class="grid">
-    <div class="card" onclick="openGame('coin')">🪙 Coin Flip</div>
-    <div class="card" onclick="openGame('roulette')">🎯 Roulette</div>
     <div class="card" onclick="openGame('slots')">🎰 Slots</div>
-    <div class="card" onclick="openGame('dice')">🎲 Dice</div>
-    <div class="card">🃏 Blackjack (Soon)</div>
-    <div class="card">💥 Crash (Soon)</div>
+    <div class="card" onclick="openGame('crash')">💥 Crash</div>
+    <div class="card" onclick="openGame('coin')">🪙 Coin Flip</div>
   </div>
+</div>
+
+<!-- SLOTS -->
+<div id="slots" class="game">
+  <h2>Slots</h2>
+  <div id="slots">
+    <span id="r1">🍒</span>
+    <span id="r2">🍋</span>
+    <span id="r3">🍊</span>
+  </div>
+  <br>
+  <button onclick="spin()">Spin</button>
+  <p id="slotResult"></p>
+  <button id="backBtn" onclick="back()">Back</button>
+</div>
+
+<!-- CRASH -->
+<div id="crash" class="game">
+  <h2>Crash</h2>
+  <div id="multiplier">1.00x</div>
+  <button onclick="startCrash()">Start</button>
+  <button onclick="cashOut()">Cash Out</button>
+  <p id="crashResult"></p>
+  <button id="backBtn" onclick="back()">Back</button>
 </div>
 
 <!-- COIN -->
@@ -107,128 +127,103 @@
   <button onclick="coin('heads')">Heads</button>
   <button onclick="coin('tails')">Tails</button>
   <p id="coinResult"></p>
-  <button id="backBtn" onclick="goBack()">Back</button>
-</div>
-
-<!-- ROULETTE -->
-<div id="roulette" class="game">
-  <h2>Roulette</h2>
-  <button onclick="roulette('red')">Red</button>
-  <button onclick="roulette('black')">Black</button>
-  <p id="rouletteResult"></p>
-  <button id="backBtn" onclick="goBack()">Back</button>
-</div>
-
-<!-- SLOTS -->
-<div id="slots" class="game">
-  <h2>Slots</h2>
-  <div class="slot" id="s1">🍒</div>
-  <div class="slot" id="s2">🍋</div>
-  <div class="slot" id="s3">🍊</div>
-  <br>
-  <button onclick="spin()">Spin</button>
-  <p id="slotResult"></p>
-  <button id="backBtn" onclick="goBack()">Back</button>
-</div>
-
-<!-- DICE -->
-<div id="dice" class="game">
-  <h2>Dice (Roll 1–6)</h2>
-  <button onclick="rollDice()">Roll</button>
-  <p id="diceResult"></p>
-  <button id="backBtn" onclick="goBack()">Back</button>
+  <button id="backBtn" onclick="back()">Back</button>
 </div>
 
 <script>
-let balance = localStorage.getItem("balance")
-  ? parseInt(localStorage.getItem("balance"))
-  : 1000;
+let balance = localStorage.getItem("btc")
+  ? parseFloat(localStorage.getItem("btc"))
+  : 0.01;
 
-function updateBalance() {
-  document.getElementById("balance").innerText = balance;
-  localStorage.setItem("balance", balance);
+function save() {
+  document.getElementById("balance").innerText = balance.toFixed(5);
+  localStorage.setItem("btc", balance);
 }
+save();
 
-updateBalance();
-
-// NAVIGATION
-function openGame(id) {
+// NAV
+function openGame(g) {
   document.getElementById("lobby").style.display = "none";
-  document.querySelectorAll(".game").forEach(g => g.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".game").forEach(x => x.classList.remove("active"));
+  document.getElementById(g).classList.add("active");
+}
+function back() {
+  document.getElementById("lobby").style.display = "block";
+  document.querySelectorAll(".game").forEach(x => x.classList.remove("active"));
 }
 
-function goBack() {
-  document.getElementById("lobby").style.display = "block";
-  document.querySelectorAll(".game").forEach(g => g.classList.remove("active"));
+// SLOTS (animated)
+function spin() {
+  let items = ["🍒","🍋","🍊","💎","⭐"];
+
+  let i = 0;
+  let interval = setInterval(() => {
+    r1.innerText = items[Math.floor(Math.random()*items.length)];
+    r2.innerText = items[Math.floor(Math.random()*items.length)];
+    r3.innerText = items[Math.floor(Math.random()*items.length)];
+    i++;
+    if (i > 15) {
+      clearInterval(interval);
+
+      if (r1.innerText === r2.innerText && r2.innerText === r3.innerText) {
+        balance += 0.002;
+        slotResult.innerText = "JACKPOT!";
+      } else {
+        balance -= 0.0005;
+        slotResult.innerText = "Lose";
+      }
+      save();
+    }
+  }, 80);
 }
 
 // COIN
-function coin(choice) {
+function coin(c) {
   let r = Math.random() < 0.5 ? "heads" : "tails";
 
-  if (choice === r) {
-    balance += 100;
-    coinResult.innerText = "WIN!";
+  if (c === r) {
+    balance += 0.001;
+    coinResult.innerText = "Win!";
   } else {
-    balance -= 100;
-    coinResult.innerText = "LOSE!";
+    balance -= 0.001;
+    coinResult.innerText = "Lose!";
   }
-
-  updateBalance();
+  save();
 }
 
-// ROULETTE
-function roulette(choice) {
-  let r = Math.random() < 0.5 ? "red" : "black";
+// CRASH
+let crashRunning = false;
+let multi = 1;
+let crashPoint = 0;
 
-  if (choice === r) {
-    balance += 200;
-    rouletteResult.innerText = "WIN (" + r + ")";
-  } else {
-    balance -= 100;
-    rouletteResult.innerText = "LOSE (" + r + ")";
-  }
+function startCrash() {
+  if (crashRunning) return;
 
-  updateBalance();
+  crashRunning = true;
+  multi = 1;
+  crashPoint = Math.random() * 3 + 1;
+
+  let loop = setInterval(() => {
+    multi += 0.05;
+    multiplier.innerText = multi.toFixed(2) + "x";
+
+    if (multi >= crashPoint) {
+      clearInterval(loop);
+      crashRunning = false;
+      crashResult.innerText = "CRASHED!";
+      balance -= 0.002;
+      save();
+    }
+  }, 100);
 }
 
-// SLOTS
-function spin() {
-  let s = ["🍒","🍋","🍊","⭐","💎"];
+function cashOut() {
+  if (!crashRunning) return;
 
-  let a = s[Math.floor(Math.random()*s.length)];
-  let b = s[Math.floor(Math.random()*s.length)];
-  let c = s[Math.floor(Math.random()*s.length)];
-
-  s1.innerText = a;
-  s2.innerText = b;
-  s3.innerText = c;
-
-  if (a === b && b === c) {
-    balance += 500;
-    slotResult.innerText = "JACKPOT!";
-  } else {
-    balance -= 50;
-    slotResult.innerText = "Try again";
-  }
-
-  updateBalance();
-}
-
-// DICE
-function rollDice() {
-  let r = Math.floor(Math.random() * 6) + 1;
-
-  if (r >= 4) {
-    balance += 120;
-    diceResult.innerText = "Rolled " + r + " → WIN!";
-  } else {
-    balance -= 60;
-    diceResult.innerText = "Rolled " + r + " → LOSE!";
-  }
-
-  updateBalance();
+  crashRunning = false;
+  balance += multi * 0.001;
+  crashResult.innerText = "Cashed out at " + multi.toFixed(2) + "x";
+  save();
 }
 </script>
 
